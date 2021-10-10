@@ -7,7 +7,7 @@ import time
 import json
 from datetime import datetime
 
-dashboard = "test"
+dashboard = "Q_Dev"
 
 # We need the current time in UTC
 # 2021-10-08T01:26:46.000Z
@@ -36,6 +36,18 @@ def add_vertical( dashboard ):
       else:
         print( f"Adding annotation to MISSING TITLE" )
 
+      if "annotations" in data['widgets'][i]['properties']:
+        if "vertical" in data['widgets'][i]['properties']['annotations']
+          # Add a vertical annotation
+        else:
+          # Create a vertical annotation
+          data['widgets'][i]['properties']['annotations'][j]
+
+      else:
+        # Create annotation and create vertical annotation
+
+      annotation = {}
+      annotation['vertical']=[]
       #  'annotations': {
       #      'vertical': [
       #          {
