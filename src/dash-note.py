@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 
 dashboard = "Q_Dev"
+label = "Just a test"
 
 # We need the current time in UTC
 # 2021-10-08T01:26:46.000Z
@@ -28,6 +29,7 @@ def get_dashboard( dashboard ):
 def add_vertical( dashboard ):
   data = dashboard['DashboardBody'].replace("'", "\"")
   data = json.loads(data)
+  payload = { 'label': label, 'value': dt }
   
   for i in range(len(data['widgets'])):
     if data['widgets'][i]['type'] == "metric":
@@ -37,25 +39,32 @@ def add_vertical( dashboard ):
         print( f"Adding annotation to MISSING TITLE" )
 
       if "annotations" in data['widgets'][i]['properties']:
-        if "vertical" in data['widgets'][i]['properties']['annotations']
+        if "vertical" in data['widgets'][i]['properties']['annotations']:
           # Add a vertical annotation
+          count = len(data['widgets'][i]['properties']['annotations']['vertical'])
+          data['widgets'][i]['properties']['annotations']['vertical'].append(payload)
+
         else:
           # Create a vertical annotation
-          data['widgets'][i]['properties']['annotations'][j]
+          data['widgets'][i]['properties']['annotations']['vertical'] = []
+          data['widgets'][i]['properties']['annotations']['vertical'].append(payload)
 
       else:
         # Create annotation and create vertical annotation
 
-      annotation = {}
-      annotation['vertical']=[]
-      #  'annotations': {
-      #      'vertical': [
-      #          {
-      #              'label': 'Untitled annotation', 
-      #              'value': '2021-10-08T01:26:46.000Z'
-      #          }
-      #      ]
-      #  }
+        data['widgets'][i]['properties']['annotations'] = {}
+        data['widgets'][i]['properties']['annotations']['vertical'] = []
+        data['widgets'][i]['properties']['annotations']['vertical'].append(payload)
+        #  'annotations': {
+        #      'vertical': [
+        #          {
+        #              'label': 'Untitled annotation', 
+        #              'value': '2021-10-08T01:26:46.000Z'
+        #          }
+        #      ]
+        #  }
+  
+  print( f"DEBUG: {data} \n" )
 
   return
 
