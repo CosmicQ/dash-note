@@ -7,13 +7,13 @@ import time
 import json
 from datetime import datetime
 
-dashboard = "Q_Dev"
+dashboard = "Test"
 label = "Just a test"
 
 # We need the current time in UTC
 # 2021-10-08T01:26:46.000Z
 now = datetime.utcnow()
-dt = now.strftime("%Y-%m-%dT%H-%M-%S.000Z")
+date_time = now.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 ########################################
 # Bring on the functions
@@ -26,10 +26,10 @@ def get_dashboard( dashboard ):
     return response
 
 # Add the vertical
-def add_vertical( dashboard ):
+def add_vertical( dashboard, label, date_time ):
   data = dashboard['DashboardBody'].replace("'", "\"")
   data = json.loads(data)
-  payload = { 'label': label, 'value': dt }
+  payload = { 'label': label, 'value': date_time }
   
   for i in range(len(data['widgets'])):
     if data['widgets'][i]['type'] == "metric":
@@ -64,18 +64,28 @@ def add_vertical( dashboard ):
         #      ]
         #  }
   
-  print( f"DEBUG: {data} \n" )
+  return data
 
-  return
+# Upload Dashboard
+def upload_dash( new_dash_data, dashboard ):
+    dash = boto3.client('cloudwatch')
+    this_dash_data = json.dumps( new_dash_data )
+    print( f"DEBUG: {type(this_dash_data)} - {this_dash_data}\n" )
+
+    response = dash.put_dashboard( DashboardName=dashboard, DashboardBody=this_dash_data )
+
+    print( f"DEBUG: {response}\n" )
+    return response
 
 ########################################
 # Main
 #def lambda_handler(event, context):
 
 # Get the dashboard(s) from cloudwatch
-my_dash = get_dashboard( dashboard )
+dash_data = get_dashboard( dashboard )
 
 # Add the vertical annotation to all graphs
-add_vertical( my_dash )
+new_dash_data = add_vertical( dash_data, label, date_time )
 
 # Upload the modified dashboard
+upload_dash( new_dash_data, dashboard )
