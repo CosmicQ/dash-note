@@ -113,5 +113,8 @@ def lambda_handler(event, context):
         upload_dash( new_dash_data, event['queryStringParameters']['dash'] )
 
     # Send response to API Gateway
+    message = f"Updated {event['queryStringParameters']['dash']} with {event['queryStringParameters']['note']} at {date_time}."
+    print( message )
+    response['body'] = message
     response_json = json.dumps(response)
     return response_json
