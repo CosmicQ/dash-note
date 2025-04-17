@@ -1,15 +1,21 @@
 provider "aws" {
-  region = "us-west-2"  # Specify your desired AWS region
+  region = "us-east-1"  # Specify your desired AWS region
 }
 
-data "aws_iam_policy_document" "cloudwatch_dashboard_policy" {
-  source_json_file = "${path.module}/policy.json"
+data "local_file" "cloudwatch_dashboard_policy" {
+  filename = "../files/policy.json"
+}
+
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_file = "../src/dash_note.py"
+  output_path = "${path.module}/dash_note.zip"
 }
 
 resource "aws_iam_policy" "cloudwatch_dashboard_policy" {
   name        = "CloudWatchDashboardPolicy"
   description = "Policy to allow PutDashboard and GetDashboard actions on CloudWatch dashboards"
-  policy      = data.aws_iam_policy_document.cloudwatch_dashboard_policy.json
+  policy      = data.local_file.cloudwatch_dashboard_policy.content
 }
 
 resource "aws_iam_role" "dash_note_lambda_role" {
@@ -40,18 +46,12 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_dashboard_policy_attachmen
 }
 
 resource "aws_lambda_function" "dash_note" {
-  filename         = "${path.module}/lambda_function.zip"
-  function_name    = "dash-note"
+  filename         = "${path.module}/dash_note.zip"
+  function_name    = "dash_note"
   role             = aws_iam_role.dash_note_lambda_role.arn
-  handler          = "lambda_function.lambda_handler"
+  handler          = "dash_note.lambda_handler"
   runtime          = "python3.8"
-  source_code_hash = filebase64sha256("${path.module}/lambda_function.zip")
-}
-
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  source_file = "${path.module}/lambda_function.py"
-  output_path = "${path.module}/lambda_function.zip"
+  source_code_hash = filebase64sha256("${path.module}/dash_note.zip")
 }
 
 output "policy_arn" {
