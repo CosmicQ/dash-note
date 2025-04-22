@@ -3,6 +3,27 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Terraform
+.terraform.lock.hcl
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Credentials
+*.pem
+*.key
+*secrets.tfvars
+*secrets.tfvars.json
+
+# Local files
+.terraform-docs
+.terraform-version
+
 # C extensions
 *.so
 
