@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 
 #######################################
-# Required Vars
-#   dash = ""
+# Required Vars (now coming from the EventBridge event)
+#   dashboardName = ""
 #   note = ""
 # Optional Vars (coming)
 #   time = ""
@@ -22,7 +22,6 @@ date_time = now.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 def get_dashboard( dashboard ):
     dash = boto3.client('cloudwatch')
     response = dash.get_dashboard( DashboardName=dashboard )
-
     return response
 
 # Add the vertical
@@ -30,7 +29,7 @@ def add_vertical( dashboard, label, date_time ):
   data = dashboard['DashboardBody'].replace("'", "\"")
   data = json.loads(data)
   payload = { 'label': label, 'value': date_time }
-  
+
   for i in range(len(data['widgets'])):
     if data['widgets'][i]['type'] == "metric":
       if "title" in data['widgets'][i]['properties']:
@@ -43,18 +42,16 @@ def add_vertical( dashboard, label, date_time ):
           # Add a vertical annotation
           count = len(data['widgets'][i]['properties']['annotations']['vertical'])
           data['widgets'][i]['properties']['annotations']['vertical'].append(payload)
-
         else:
           # Create a vertical annotation
           data['widgets'][i]['properties']['annotations']['vertical'] = []
           data['widgets'][i]['properties']['annotations']['vertical'].append(payload)
-
       else:
         # Create annotation and create vertical annotation
         data['widgets'][i]['properties']['annotations'] = {}
         data['widgets'][i]['properties']['annotations']['vertical'] = []
         data['widgets'][i]['properties']['annotations']['vertical'].append(payload)
-  
+
   return data
 
 # Upload Dashboard
@@ -63,58 +60,54 @@ def upload_dash( new_dash_data, dashboard ):
     this_dash_data = json.dumps( new_dash_data )
     print( f"DEBUG: {type(this_dash_data)} - {this_dash_data}\n" )
     response = dash.put_dashboard( DashboardName=dashboard, DashboardBody=this_dash_data )
-
     return response
 
-def validate( event, response ):
-
-    # Do we have a dashboard defined?
-    if "dash" not in event['queryStringParameters'].keys():
-        response['statusCode'] = 400
-        response['body'] = "dash not defined"
-
-        return response
-    
-    if "note" not in event['queryStringParameters'].keys():
-        response['statusCode'] = 400
-        response['body'] = "note not defined"
-       
-        return response
-
-    # Future - Add more validation
-
-    return
+# No need for the validate function as EventBridge will provide the structure
 
 ########################################
 # Main
 def lambda_handler(event, context):
 
-    response = {
-        'isBase64Encoded': 'false',
-        'statusCode': 200,
-        'body': 'Validated',
-        'headers': {
-        'content-type': "application/json"
+    print(f"Received event: {event}") # Good for debugging
+
+    dashboard_name = event.get('dashboardName')
+    note = event.get('note')
+
+    if not dashboard_name:
+        print("Error: 'dashboardName' not found in the event.")
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'error': 'dashboardName not provided in the event'})
         }
-    }
 
-    # Validate the input
-    validate( event, response )
+    if not note:
+        print("Error: 'note' not found in the event.")
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'error': 'note not provided in the event'})
+        }
 
-    if response['statusCode'] == 200:
-
+    try:
         # Get the dashboard(s) from cloudwatch
-        dash_data = get_dashboard( event['queryStringParameters']['dash'] )
+        dash_data = get_dashboard(dashboard_name)
 
         # Add the vertical annotation to all graphs
-        new_dash_data = add_vertical( dash_data, event['queryStringParameters']['note'], date_time )
+        new_dash_data = add_vertical(dash_data, note, date_time)
 
         # Upload the modified dashboard
-        upload_dash( new_dash_data, event['queryStringParameters']['dash'] )
+        upload_dash(new_dash_data, dashboard_name)
 
-    # Send response to API Gateway
-    message = f"Updated {event['queryStringParameters']['dash']} with {event['queryStringParameters']['note']} at {date_time}."
-    print( message )
-    response['body'] = message
-    response_json = json.dumps(response)
-    return response_json
+        message = f"Updated {dashboard_name} with '{note}' at {date_time}."
+        print(message)
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'message': message})
+        }
+
+    except Exception as e:
+        print(f"Error processing event: {e}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)})
+        }
+    

@@ -1,7 +1,3 @@
-provider "aws" {
-  region = "us-east-1"  # Specify your desired AWS region
-}
-
 data "local_file" "cloudwatch_dashboard_policy" {
   filename = "../files/policy.json"
 }
@@ -43,15 +39,6 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 resource "aws_iam_role_policy_attachment" "cloudwatch_dashboard_policy_attachment" {
   role       = aws_iam_role.dash_note_lambda_role.name
   policy_arn = aws_iam_policy.cloudwatch_dashboard_policy.arn
-}
-
-resource "aws_lambda_function" "dash_note" {
-  filename         = "${path.module}/dash_note.zip"
-  function_name    = "dash_note"
-  role             = aws_iam_role.dash_note_lambda_role.arn
-  handler          = "dash_note.lambda_handler"
-  runtime          = "python3.8"
-  source_code_hash = filebase64sha256("${path.module}/dash_note.zip")
 }
 
 resource "aws_lambda_function" "dash_note" {
