@@ -2,12 +2,6 @@ data "local_file" "cloudwatch_dashboard_policy" {
   filename = "../files/policy.json"
 }
 
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  source_file = "../src/dash_note.py"
-  output_path = "${path.module}/dash_note.zip"
-}
-
 resource "aws_iam_policy" "cloudwatch_dashboard_policy" {
   name        = "CloudWatchDashboardPolicy"
   description = "Policy to allow PutDashboard and GetDashboard actions on CloudWatch dashboards"
@@ -41,20 +35,4 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_dashboard_policy_attachmen
   policy_arn = aws_iam_policy.cloudwatch_dashboard_policy.arn
 }
 
-resource "aws_lambda_function" "dash_note" {
-  filename         = data.archive_file.lambda_zip.output_path
-  function_name    = "dash-note"
-  role             = aws_iam_role.dash_note_lambda_role.arn
-  handler          = "lambda_function.lambda_handler"
-  runtime          = "python3.8"
-  source_code_hash = filebase64sha256(data.archive_file.lambda_zip.output_path)
-}
-
-output "policy_arn" {
-  value = aws_iam_policy.cloudwatch_dashboard_policy.arn
-}
-
-output "lambda_function_arn" {
-  value = aws_lambda_function.dash_note.arn
-}
 

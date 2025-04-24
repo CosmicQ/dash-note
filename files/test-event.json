@@ -1,0 +1,5 @@
+{
+    "Source": "com.example.my-dashboard-app",
+    "DetailType": "DashboardUpdated",
+    "Detail": "{\"dashboardName\": \"My Performance Dashboard\", \"note\": \"Significant increase in user engagement metrics this week.\"}"
+  }

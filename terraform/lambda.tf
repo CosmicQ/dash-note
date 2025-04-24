@@ -1,0 +1,15 @@
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_file = "../src/dash_note.py"
+  output_path = "${path.module}/dash_note.zip"
+}
+
+resource "aws_lambda_function" "dash_note" {
+  filename         = data.archive_file.lambda_zip.output_path
+  function_name    = "dash-note"
+  role             = aws_iam_role.dash_note_lambda_role.arn
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.8"
+  source_code_hash = filebase64sha256(data.archive_file.lambda_zip.output_path)
+}
+

@@ -1,6 +1,7 @@
 import boto3
 import time
 import json
+import logging
 from datetime import datetime
 
 #######################################
@@ -9,6 +10,9 @@ from datetime import datetime
 #   note = ""
 # Optional Vars (coming)
 #   time = ""
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # We need the current time in UTC
 # 2021-10-08T01:26:46.000Z
@@ -68,20 +72,20 @@ def upload_dash( new_dash_data, dashboard ):
 # Main
 def lambda_handler(event, context):
 
-    print(f"Received event: {event}") # Good for debugging
+    logging.info(f"Received event: {event}")
 
     dashboard_name = event.get('dashboardName')
     note = event.get('note')
 
     if not dashboard_name:
-        print("Error: 'dashboardName' not found in the event.")
+        logging.error("Error: 'dashboardName' not found in the event.")
         return {
             'statusCode': 400,
             'body': json.dumps({'error': 'dashboardName not provided in the event'})
         }
 
     if not note:
-        print("Error: 'note' not found in the event.")
+        logging.error("Error: 'note' not found in the event.")
         return {
             'statusCode': 400,
             'body': json.dumps({'error': 'note not provided in the event'})
@@ -98,14 +102,14 @@ def lambda_handler(event, context):
         upload_dash(new_dash_data, dashboard_name)
 
         message = f"Updated {dashboard_name} with '{note}' at {date_time}."
-        print(message)
+        logging.info(message)
         return {
             'statusCode': 200,
             'body': json.dumps({'message': message})
         }
 
     except Exception as e:
-        print(f"Error processing event: {e}")
+        logging.error(f"Error processing event: {e}")
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})
